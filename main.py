@@ -85,12 +85,14 @@ class Database:
 
     def showProducts(self, parameters):
         columns = ['product_name', 'freight', 'unit_price', 'units_in_stock', 'category_id', 'supplier_id']
-        return ' = %s AND '.join([columns[x] for x in range(6) if parameters[x] != ""]) + ' = %s'
+        query = 'SELECT * FROM products WHERE {0} = %s'.format(
+            ' = %s AND '.join([columns[x] for x in range(6) if parameters[x] != ""]))
+        self.cursor.execute(query, tuple([x for x in parameters if x != ""]))
+        return self.cursor.fetchall()
 
-# try:
-db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
-print(db.showProducts(('random', '', 'random', '', 'random', '')))
-# except:
-#     print("Error!")
-# else:
-#     print("Success!")
+try:
+    db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
+except:
+    print("Error!")
+else:
+    print("Success!")
