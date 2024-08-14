@@ -83,16 +83,46 @@ class Database:
             query = "DELETE FROM categories WHERE category_name = %s AND category_description = %s"
         self.cursor.execute(query, category)
 
-    def showProducts(self, parameters):
+    def showProducts(self, parameters=()):
         columns = ['product_name', 'freight', 'unit_price', 'units_in_stock', 'category_id', 'supplier_id']
-        query = 'SELECT * FROM products WHERE {0} = %s'.format(
-            ' = %s AND '.join([columns[x] for x in range(6) if parameters[x] != ""]))
-        self.cursor.execute(query, tuple([x for x in parameters if x != ""]))
+        notEmptyColumns = [x for x in parameters if x != ""]
+        if len(notEmptyColumns) > 0:
+            query = ('SELECT product_name, freight, unit_price, units_in_stock,'
+                     'category_name, company_name FROM products'
+                     'JOIN categories USING (category_id)'
+                     'JOIN suppliers USING (supplier_id)'
+                     'JOIN companies USING (company_id)'
+                     'WHERE {0} = %s').format(
+                ' = %s AND '.join([columns[x] for x in range(6) if parameters[x] != ""]))
+            self.cursor.execute(query, tuple(notEmptyColumns))
+        else:
+            query = ('SELECT product_name, freight, unit_price, units_in_stock,'
+                     'category_name, company_name FROM products '
+                     'JOIN categories USING (category_id)'
+                     'JOIN suppliers USING (supplier_id)'
+                     'JOIN companies USING (company_id)')
+            self.cursor.execute(query)
         return self.cursor.fetchall()
 
-try:
-    db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
-except:
-    print("Error!")
-else:
-    print("Success!")
+    def showSuppliers(self, parameters=()):
+        columns = ['company_name', 'company_city', 'company_country', 'company_phone', 'company_homepage']
+        notEmptyColumns = [x for x in parameters if x != ""]
+        if len(notEmptyColumns) > 0:
+            query = ('SELECT company_name, company_city, company_country, company_phone,'
+                     'company_homepage FROM companies WHERE {0} = %s').format(
+                ' = %s AND '.join([columns[x] for x in range(5) if parameters[x] != ""]))
+            self.cursor.execute(query, tuple(notEmptyColumns))
+        else:
+            query = ('SELECT company_name, company_city, company_country,'
+                     'company_phone, company_homepage FROM companies')
+            self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+
+# try:
+db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
+print(db.showProducts())
+# except:
+#     print("Error!")
+# else:
+#     print("Success!")
