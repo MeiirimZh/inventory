@@ -129,6 +129,46 @@ class Database:
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
+    def addReceipts(self, parameters):
+        # Get the product_id
+        query = "SELECT product_id FROM products WHERE product_name = %s"
+        self.cursor.execute(query, (parameters[2],))
+        product_id = self.cursor.fetchone()[0]
+        # Get the supplier_id
+        query = "SELECT company_id FROM companies WHERE company_name = %s"
+        self.cursor.execute(query, (parameters[4],))
+        supplier_id = self.cursor.fetchone()[0]
+        # Set the new parameters
+        new_parameters = parameters[:2] + (product_id,) + (parameters[3],) + (supplier_id,)
+        # Add the receipt
+        query = """INSERT INTO receipts (order_number, order_date, product_id, amount, supplier_id)
+                VALUES
+                (%s, %s, %s, %s, %s)"""
+        self.cursor.execute(query, new_parameters)
+
+    def cancelReceipt(self, order_number):
+        query = """DELETE FROM receipts 
+                WHERE order_number = %s"""
+        self.cursor.execute(query, (order_number,))
+
+    def addWriteOffs(self, parameters):
+        # Get the product_id
+        query = "SELECT product_id FROM products WHERE product_name = %s"
+        self.cursor.execute(query, (parameters[2],))
+        product_id = self.cursor.fetchone()[0]
+        # Set the new parameters
+        new_parameters = parameters[:2] + (product_id,) + parameters[3:]
+        # Add the write-off
+        query = """INSERT INTO write_offs (order_number, order_date, product_id, amount, reason)
+                VALUES
+                (%s, %s, %s, %s, %s)"""
+        self.cursor.execute(query, new_parameters)
+
+    def cancelWriteOff(self, order_number):
+        query = """DELETE FROM write_offs
+                WHERE order_number = %s"""
+        self.cursor.execute(query, (order_number,))
+
 
 try:
     db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
