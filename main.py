@@ -44,6 +44,13 @@ class Database:
                 company_country = %s AND company_phone = %s AND company_homepage = %s"""
         self.cursor.execute(query, parameters)
 
+    def editSuppliers(self, parameters: tuple):
+        query = """UPDATE companies SET company_name = %s, company_city = %s, company_country = %s, 
+            company_phone = %s, company_homepage = %s
+            WHERE company_name = %s AND company_city = %s AND company_country = %s AND 
+            company_phone = %s AND company_homepage = %s"""
+        self.cursor.execute(query, parameters)
+
     def clearTable(self, table):
         query = f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"
         self.cursor.execute(query)
@@ -63,9 +70,8 @@ class Database:
             else:
                 raise ValueError
         elif action == "edit":
-            query = """ALTER TABLE products
-                    SET product_name = %s AND freight = %s AND unit_price = %s AND 
-                    units_in_stock = %s AND category_id = %s AND supplier_id = %s
+            query = """UPDATE products SET product_name = %s, freight = %s, unit_price = %s,  
+                    units_in_stock = %s, category_id = %s, supplier_id = %s 
                     WHERE product_name = %s AND freight = %s AND unit_price = %s AND
                     units_in_stock = %s AND category_id = %s AND supplier_id = %s"""
         else:
@@ -118,11 +124,15 @@ class Database:
             self.cursor.execute(query)
         return self.cursor.fetchall()
 
+    def showCategories(self):
+        query = 'SELECT category_name, category_description FROM categories'
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
 
-# try:
-db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
-print(db.showProducts())
-# except:
-#     print("Error!")
-# else:
-#     print("Success!")
+
+try:
+    db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
+except:
+    print("Error!")
+else:
+    print("Success!")
