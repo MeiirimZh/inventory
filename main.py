@@ -135,8 +135,8 @@ class Database:
         self.cursor.execute(query, (parameters[2],))
         product_id = self.cursor.fetchone()[0]
         # Get the supplier_id
-        query = "SELECT company_id FROM companies WHERE company_name = %s"
-        self.cursor.execute(query, (parameters[4],))
+        query = "SELECT supplier_id FROM products WHERE product_id = %s"
+        self.cursor.execute(query, (product_id,))
         supplier_id = self.cursor.fetchone()[0]
         # Set the new parameters
         new_parameters = parameters[:2] + (product_id,) + (parameters[3],) + (supplier_id,)
@@ -168,6 +168,17 @@ class Database:
         query = """DELETE FROM write_offs
                 WHERE order_number = %s"""
         self.cursor.execute(query, (order_number,))
+
+    def inventoryMovementReport(self, count, timeunit):
+        # Date types: days, months, years
+        # Convert count to days
+        actions = {'days': lambda x: count, 'months': lambda x: count*30, 'years': lambda x: count*365}
+        action = actions.get(timeunit)
+        count = action(count)
+        # Execute the report
+        query = """SELECT product_name, MAX(order_date), SUM(amount), supplier_id
+                FROM receipts
+                WHERE MAX(order_date)"""
 
 
 try:
