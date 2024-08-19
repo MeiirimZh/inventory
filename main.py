@@ -170,15 +170,56 @@ class Database:
         self.cursor.execute(query, (order_number,))
 
     def inventoryMovementReport(self, count, timeunit):
-        # Date types: days, months, years
+        """Return data description:
+        1 - product name;
+        2 - last receipt date;
+        3 - last write-off date;
+        4 - total receipt amount;
+        5 - total write-off amount;
+        6 - receipt supplier;
+        7 - write-off's most frequent reason;
+        """
         # Convert count to days
         actions = {'days': lambda x: count, 'months': lambda x: count*30, 'years': lambda x: count*365}
         action = actions.get(timeunit)
         count = action(count)
-        # Execute the report
-        query = """SELECT product_name, MAX(order_date), SUM(amount), supplier_id
+        # Get the receipts
+        query = """SELECT product_name, MAX(order_date), SUM(amount), company_name
                 FROM receipts
-                WHERE MAX(order_date)"""
+                JOIN products USING(product_id)
+                JOIN suppliers ON receipts.supplier_id = suppliers.supplier_id
+                JOIN companies USING(company_id)
+                WHERE order_date >= (SELECT CURRENT_DATE - %s + 1)
+                GROUP BY product_name, company_name"""
+        self.cursor.execute(query, (count,))
+        receipts = self.cursor.fetchall()
+        # Get the most frequent reasons
+        query = """SELECT product_id, reason, COUNT(*)
+                FROM write_offs
+                GROUP BY product_id, reason
+                ORDER BY product_id, COUNT(*) DESC"""
+        self.cursor.execute(query)
+        res = self.cursor.fetchall()
+        most_frequent_reasons = []
+        for i in range(len(res)-1):
+            if res[i][0] == res[i+1][0]:
+                most_frequent_reasons.append(res[i])
+            else:
+                pass
+        if res[-1] != res[-2]:
+            most_frequent_reasons.append(res[-1])
+        # Get the write-offs
+        query = """SELECT product_name, MAX(order_date), SUM(amount)
+                FROM write_offs
+                JOIN products USING(product_id)
+                WHERE order_date >= (SELECT CURRENT_DATE - %s + 1)
+                GROUP BY product_name"""
+        self.cursor.execute(query, (count,))
+        write_offs = self.cursor.fetchall()
+        write_offs = tuple([list(write_offs[x])+[most_frequent_reasons[x][1]] for x in range(len(write_offs))])
+        # Return the report result
+        return [(receipts[x][0], receipts[x][1], write_offs[x][1],
+                 receipts[x][2], write_offs[x][2], receipts[x][3], write_offs[x][3]) for x in range(len(receipts))]
 
 
 try:
