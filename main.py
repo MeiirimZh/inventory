@@ -221,6 +221,15 @@ class Database:
         return [(receipts[x][0], receipts[x][1], write_offs[x][1],
                  receipts[x][2], write_offs[x][2], receipts[x][3], write_offs[x][3]) for x in range(len(receipts))]
 
+    def SLOBInventoryReport(self):
+        query = """SELECT product_name, MAX(order_date), SUM(amount), unit_price*units_in_stock
+                FROM write_offs
+                JOIN products USING(product_id)
+                GROUP BY product_name, unit_price, units_in_stock
+                ORDER BY MAX(order_date)"""
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
 
 try:
     db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
