@@ -1,4 +1,7 @@
+import sys
 import psycopg2
+from PyQt5 import QtCore, QtGui, QtWidgets
+from mainwindow import Ui_MainWindow
 from config import host, user, password, db_name
 
 
@@ -231,9 +234,11 @@ class Database:
         return self.cursor.fetchall()
 
 
-try:
-    db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
-except:
-    print("Error!")
-else:
-    print("Success!")
+app = QtWidgets.QApplication(sys.argv)
+font = QtGui.QFont("Nunito")
+app.setFont(font)
+MainWindow = QtWidgets.QMainWindow()
+ui = Ui_MainWindow()
+ui.setupUi(MainWindow)
+MainWindow.show()
+sys.exit(app.exec_())
