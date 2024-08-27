@@ -9,6 +9,9 @@ class Database:
     '''Database
     '''
     def __init__(self, connection):
+        self.productFilterDict = {}
+        self.productFilterData = []
+
         self.connection = connection
         self.cursor = connection.cursor()
 
@@ -97,7 +100,7 @@ class Database:
         notEmptyColumns = [x for x in parameters if x != ""]
         if len(notEmptyColumns) > 0:
             query = ('SELECT product_name, freight, unit_price, units_in_stock,'
-                     'category_name, company_name FROM products'
+                     'category_name, company_name FROM products '
                      'JOIN categories USING (category_id)'
                      'JOIN suppliers USING (supplier_id)'
                      'JOIN companies USING (company_id)'
@@ -234,11 +237,51 @@ class Database:
         return self.cursor.fetchall()
 
 
-app = QtWidgets.QApplication(sys.argv)
+# Initialize Database object
+db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
+
+mainwindow = QtWidgets.QApplication(sys.argv)
 font = QtGui.QFont("Nunito")
-app.setFont(font)
+mainwindow.setFont(font)
 MainWindow = QtWidgets.QMainWindow()
 ui = Ui_MainWindow()
 ui.setupUi(MainWindow)
 MainWindow.show()
-sys.exit(app.exec_())
+
+
+# Convert dictionary to tuple
+def conv_prod_dic(user_dict: dict):
+    columns = ('Product name', 'Freight', 'Unit price', 'Units in stock', 'Category', 'Supplier')
+    res = []
+    for column in columns:
+        for item in user_dict:
+            if column == item:
+                res.append(user_dict[item])
+    return res
+
+
+# Connection Database and GUI functions
+def output_products_gui():
+    if ui.productFilterPTE.toPlainText():
+        # Add a tag to the dictionary
+        db.productFilterDict[ui.productFilterCB.currentText()] = ui.productFilterPTE.toPlainText()
+        db.productFilterData = tuple(conv_prod_dic(db.productFilterDict))
+        # Add a tag text
+        text = 'Tags | ' + str(db.productFilterDict).replace("'", "")[1:-1]
+        ui.productsTagsLabel.setText(text)
+    else:
+        sqlquery = db.showProducts(db.productFilterData)
+        populate_table(ui.productsTable, sqlquery, 6)
+
+
+def populate_table(table, data, column_count):
+    table.setRowCount(len(data))
+    for row_index, row_data in enumerate(data):
+        for column_index in range(column_count):
+            table.setItem(row_index, column_index, QtWidgets.QTableWidgetItem(str(row_data[column_index])))
+
+
+# Modulate main window
+ui.productFilterBtn.clicked.connect(lambda x: output_products_gui())
+
+sys.exit(mainwindow.exec_())
