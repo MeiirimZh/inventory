@@ -1892,6 +1892,9 @@ class Ui_MainWindow(object):
         self.productsTable.setColumnWidth(4, 300)
         self.productsTable.setColumnWidth(5, 300)
 
+        self.categoriesTable.setColumnWidth(0, 300)
+        self.categoriesTable.setColumnWidth(1, 1000)
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Inventory"))

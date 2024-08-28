@@ -1,6 +1,7 @@
 import sys
 import psycopg2
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QApplication
 from mainwindow import Ui_MainWindow
 from config import host, user, password, db_name
 
@@ -8,9 +9,12 @@ from config import host, user, password, db_name
 class Database:
     '''Database
     '''
+
     def __init__(self, connection):
         self.productFilterDict = {}
-        self.productFilterData = []
+        self.copiedProduct = []
+
+        self.categoryFilterStr = ''
 
         self.connection = connection
         self.cursor = connection.cursor()
@@ -66,25 +70,64 @@ class Database:
         second is a changing record
         """
         if action == "add":
-            query_select = """SELECT product_id FROM products WHERE product_name = %s AND
-                     freight = %s AND unit_price = %s AND units_in_stock = %s AND
-                     category_id = %s AND supplier_id = %s"""
+            query_select = """SELECT product_id FROM products
+                    JOIN categories USING (category_id)
+                    JOIN suppliers USING (supplier_id)
+                    JOIN companies USING (company_id)
+                    WHERE product_name = %s AND
+                    freight = %s AND unit_price = %s AND units_in_stock = %s AND
+                    category_name = %s AND company_name = %s"""
             self.cursor.execute(query_select, product)
             if self.cursor.fetchone() is None:
+                # Get the category id
+                query = "SELECT category_id FROM categories WHERE category_name = %s"
+                self.cursor.execute(query, (product[4],))
+                category_id = self.cursor.fetchone()[0]
+                # Get the supplier id (company id)
+                query = "SELECT company_id FROM companies WHERE company_name = %s"
+                self.cursor.execute(query, (product[5],))
+                company_id = self.cursor.fetchone()[0]
+                # Update product parameters
+                product = (product[0], product[1], product[2], product[3], category_id, company_id)
+
                 query = """INSERT INTO products (product_name, freight, unit_price, units_in_stock, category_id,
                         supplier_id) VALUES (%s, %s, %s, %s, %s, %s)"""
             else:
                 raise ValueError
         elif action == "edit":
+            # Get the product id
+            query = """SELECT product_id FROM products WHERE product_name = %s AND freight = %s AND unit_price = %s AND
+                    units_in_stock = %s AND category_id = (SELECT category_id FROM categories
+                    WHERE category_name = %s) AND supplier_id = (SELECT company_id FROM companies
+                    WHERE company_name = %s)"""
+            self.cursor.execute(query, product[:6])
+            product_id = self.cursor.fetchone()[0]
+            # Get the new category id
+            query = "SELECT category_id FROM categories WHERE category_name = %s"
+            self.cursor.execute(query, (product[10],))
+            new_category_id = self.cursor.fetchone()[0]
+            # Get the new company id
+            query = "SELECT company_id FROM companies WHERE company_name = %s"
+            self.cursor.execute(query, (product[11],))
+            new_company_id = self.cursor.fetchone()[0]
+
             query = """UPDATE products SET product_name = %s, freight = %s, unit_price = %s,  
-                    units_in_stock = %s, category_id = %s, supplier_id = %s 
-                    WHERE product_name = %s AND freight = %s AND unit_price = %s AND
-                    units_in_stock = %s AND category_id = %s AND supplier_id = %s"""
+                    units_in_stock = %s, category_id = %s, supplier_id = %s
+                    WHERE product_id = %s;"""
+            product = (product[6], product[7], product[8], product[9], new_category_id, new_company_id, product_id)
         else:
-            query = """DELETE FROM products WHERE product_id = (SELECT MAX(product_id) FROM products) AND
-                    product_name = %s AND freight = %s AND
-                    unit_price = %s AND units_in_stock = %s AND
-                    category_id = %s AND supplier_id = %s"""
+            query = """DELETE FROM products 
+                    WHERE product_id = (
+                        SELECT product_id 
+                        FROM products 
+                        JOIN categories USING (category_id)
+                        JOIN suppliers USING (supplier_id)
+                        JOIN companies USING (company_id)
+                        WHERE product_id = (SELECT MAX(product_id) FROM products) AND
+                        product_name = %s AND freight = %s AND
+                        unit_price = %s AND units_in_stock = %s AND
+                        category_name = %s AND company_name = %s
+                    )"""
 
         self.cursor.execute(query, product)
 
@@ -95,25 +138,27 @@ class Database:
             query = "DELETE FROM categories WHERE category_name = %s AND category_description = %s"
         self.cursor.execute(query, category)
 
-    def showProducts(self, parameters=()):
-        columns = ['product_name', 'freight', 'unit_price', 'units_in_stock', 'category_id', 'supplier_id']
-        notEmptyColumns = [x for x in parameters if x != ""]
-        if len(notEmptyColumns) > 0:
-            query = ('SELECT product_name, freight, unit_price, units_in_stock,'
-                     'category_name, company_name FROM products '
-                     'JOIN categories USING (category_id)'
-                     'JOIN suppliers USING (supplier_id)'
-                     'JOIN companies USING (company_id)'
-                     'WHERE {0} = %s').format(
-                ' = %s AND '.join([columns[x] for x in range(6) if parameters[x] != ""]))
-            self.cursor.execute(query, tuple(notEmptyColumns))
+    def showProducts(self, parameters):
+        if len(parameters) == 0:
+            query = """SELECT product_name, freight, unit_price, units_in_stock,
+                    category_name, company_name FROM products 
+                    JOIN categories USING (category_id)
+                    JOIN suppliers USING (supplier_id)
+                    JOIN companies USING (company_id)
+                    ORDER BY product_id"""
         else:
-            query = ('SELECT product_name, freight, unit_price, units_in_stock,'
-                     'category_name, company_name FROM products '
-                     'JOIN categories USING (category_id)'
-                     'JOIN suppliers USING (supplier_id)'
-                     'JOIN companies USING (company_id)')
-            self.cursor.execute(query)
+            conditions = []
+            for i in parameters:
+                if parameters.get(i) != "":
+                    string = "'" + parameters[i] + "'" if isinstance(parameters[i], str) else parameters[i]
+                    conditions.append(f"{i} = {string}")
+            query = """SELECT product_name, freight, unit_price, units_in_stock,
+                                category_name, company_name FROM products 
+                                JOIN categories USING (category_id)
+                                JOIN suppliers USING (supplier_id)
+                                JOIN companies USING (company_id) WHERE {0}
+                                ORDER BY product_id""".format(' AND '.join(conditions))
+        self.cursor.execute(query)
         return self.cursor.fetchall()
 
     def showSuppliers(self, parameters=()):
@@ -186,7 +231,7 @@ class Database:
         7 - write-off's most frequent reason;
         """
         # Convert count to days
-        actions = {'days': lambda x: count, 'months': lambda x: count*30, 'years': lambda x: count*365}
+        actions = {'days': lambda x: count, 'months': lambda x: count * 30, 'years': lambda x: count * 365}
         action = actions.get(timeunit)
         count = action(count)
         # Get the receipts
@@ -207,8 +252,8 @@ class Database:
         self.cursor.execute(query)
         res = self.cursor.fetchall()
         most_frequent_reasons = []
-        for i in range(len(res)-1):
-            if res[i][0] == res[i+1][0]:
+        for i in range(len(res) - 1):
+            if res[i][0] == res[i + 1][0]:
                 most_frequent_reasons.append(res[i])
             else:
                 pass
@@ -222,7 +267,7 @@ class Database:
                 GROUP BY product_name"""
         self.cursor.execute(query, (count,))
         write_offs = self.cursor.fetchall()
-        write_offs = tuple([list(write_offs[x])+[most_frequent_reasons[x][1]] for x in range(len(write_offs))])
+        write_offs = tuple([list(write_offs[x]) + [most_frequent_reasons[x][1]] for x in range(len(write_offs))])
         # Return the report result
         return [(receipts[x][0], receipts[x][1], write_offs[x][1],
                  receipts[x][2], write_offs[x][2], receipts[x][3], write_offs[x][3]) for x in range(len(receipts))]
@@ -263,15 +308,62 @@ def conv_prod_dic(user_dict: dict):
 # Connection Database and GUI functions
 def output_products_gui():
     if ui.productFilterPTE.toPlainText():
+        # Set the value
+        value = float(ui.productFilterPTE.toPlainText()) if ui.productFilterPTE.toPlainText().isdigit() \
+            else ui.productFilterPTE.toPlainText()
         # Add a tag to the dictionary
-        db.productFilterDict[ui.productFilterCB.currentText()] = ui.productFilterPTE.toPlainText()
-        db.productFilterData = tuple(conv_prod_dic(db.productFilterDict))
+        db.productFilterDict[ui.productFilterCB.currentText().lower().replace(' ', '_')] = value
         # Add a tag text
         text = 'Tags | ' + str(db.productFilterDict).replace("'", "")[1:-1]
         ui.productsTagsLabel.setText(text)
+        ui.productFilterPTE.setPlainText("")
     else:
-        sqlquery = db.showProducts(db.productFilterData)
+        sqlquery = db.showProducts(db.productFilterDict)
         populate_table(ui.productsTable, sqlquery, 6)
+
+
+def clear_product_filter():
+    db.productFilterDict = {}
+    ui.productsTagsLabel.setText('Tags')
+
+
+def get_product_parameters_gui():
+    return (
+        ui.productNamePTE.toPlainText(),
+        float(ui.freightPTE.toPlainText()),
+        float(ui.unitPricePTE.toPlainText()),
+        float(ui.unitsInStockPTE.toPlainText()),
+        ui.productsCategoryPTE.toPlainText(),
+        ui.productsSupplierPTE.toPlainText()
+    )
+
+
+def copy_product_gui(row):
+    items = [ui.productsTable.item(row, col).text() for col in range(ui.productsTable.columnCount())]
+    text_fields = (ui.productNamePTE, ui.freightPTE, ui.unitPricePTE, ui.unitsInStockPTE,
+                   ui.productsCategoryPTE, ui.productsSupplierPTE)
+    db.copiedProduct = tuple(items)
+    for i in range(len(text_fields)):
+        text_fields[i].setPlainText(items[i])
+
+
+def add_product_gui():
+    product = get_product_parameters_gui()
+    db.updateProducts(product, 'add')
+    output_products_gui()
+
+
+def del_product_gui():
+    product = get_product_parameters_gui()
+    db.updateProducts(product, 'delete')
+    output_products_gui()
+
+
+def chg_product_gui():
+    old_parameters = db.copiedProduct
+    new_parameters = get_product_parameters_gui()
+    db.updateProducts((old_parameters+new_parameters), 'edit')
+    output_products_gui()
 
 
 def populate_table(table, data, column_count):
@@ -282,6 +374,11 @@ def populate_table(table, data, column_count):
 
 
 # Modulate main window
-ui.productFilterBtn.clicked.connect(lambda x: output_products_gui())
+ui.productFilterBtn.clicked.connect(lambda: output_products_gui())
+ui.productFilterClearBtn.clicked.connect(lambda: clear_product_filter())
+ui.addProductBtn.clicked.connect(lambda: add_product_gui())
+ui.delProductBtn.clicked.connect(lambda: del_product_gui())
+ui.chgProductBtn.clicked.connect(lambda: chg_product_gui())
+ui.productsTable.verticalHeader().sectionClicked.connect(copy_product_gui)
 
 sys.exit(mainwindow.exec_())
