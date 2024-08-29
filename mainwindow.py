@@ -568,18 +568,18 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.addCategoryBtn, 1, 2, 1, 1)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.delCateogryBtn = QtWidgets.QPushButton(self.categoriesTab)
+        self.delCategoryBtn = QtWidgets.QPushButton(self.categoriesTab)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.delCateogryBtn.sizePolicy().hasHeightForWidth())
-        self.delCateogryBtn.setSizePolicy(sizePolicy)
-        self.delCateogryBtn.setMinimumSize(QtCore.QSize(80, 0))
-        self.delCateogryBtn.setMaximumSize(QtCore.QSize(300, 40))
+        sizePolicy.setHeightForWidth(self.delCategoryBtn.sizePolicy().hasHeightForWidth())
+        self.delCategoryBtn.setSizePolicy(sizePolicy)
+        self.delCategoryBtn.setMinimumSize(QtCore.QSize(80, 0))
+        self.delCategoryBtn.setMaximumSize(QtCore.QSize(300, 40))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.delCateogryBtn.setFont(font)
-        self.delCateogryBtn.setStyleSheet("QPushButton {\n"
+        self.delCategoryBtn.setFont(font)
+        self.delCategoryBtn.setStyleSheet("QPushButton {\n"
 "color: rgb(30, 28, 55);\n"
 "background-color: rgb(27, 223, 148);\n"
 "border-radius: 15px;\n"
@@ -592,8 +592,8 @@ class Ui_MainWindow(object):
 "QPushButton:pressed {\n"
 "background-color: rgb(19, 163, 108)\n"
 "}")
-        self.delCateogryBtn.setObjectName("delCateogryBtn")
-        self.verticalLayout_4.addWidget(self.delCateogryBtn)
+        self.delCategoryBtn.setObjectName("delCategoryBtn")
+        self.verticalLayout_4.addWidget(self.delCategoryBtn)
         spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_4.addItem(spacerItem3)
         self.gridLayout_2.addLayout(self.verticalLayout_4, 2, 2, 1, 1)
@@ -665,7 +665,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.companyFilterCB.sizePolicy().hasHeightForWidth())
         self.companyFilterCB.setSizePolicy(sizePolicy)
         self.companyFilterCB.setMinimumSize(QtCore.QSize(100, 0))
-        self.companyFilterCB.setMaximumSize(QtCore.QSize(150, 30))
+        self.companyFilterCB.setMaximumSize(QtCore.QSize(200, 30))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.companyFilterCB.setFont(font)
@@ -726,17 +726,17 @@ class Ui_MainWindow(object):
 "}")
         self.companyFilterBtn.setObjectName("companyFilterBtn")
         self.horizontalLayout_3.addWidget(self.companyFilterBtn)
-        self.supplierFilterClearBtn = QtWidgets.QPushButton(self.supplierTab)
+        self.companyFilterClearBtn = QtWidgets.QPushButton(self.supplierTab)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.supplierFilterClearBtn.sizePolicy().hasHeightForWidth())
-        self.supplierFilterClearBtn.setSizePolicy(sizePolicy)
-        self.supplierFilterClearBtn.setMaximumSize(QtCore.QSize(100, 30))
+        sizePolicy.setHeightForWidth(self.companyFilterClearBtn.sizePolicy().hasHeightForWidth())
+        self.companyFilterClearBtn.setSizePolicy(sizePolicy)
+        self.companyFilterClearBtn.setMaximumSize(QtCore.QSize(100, 30))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.supplierFilterClearBtn.setFont(font)
-        self.supplierFilterClearBtn.setStyleSheet("QPushButton {\n"
+        self.companyFilterClearBtn.setFont(font)
+        self.companyFilterClearBtn.setStyleSheet("QPushButton {\n"
 "color: rgb(30, 28, 55);\n"
 "background-color: rgb(27, 223, 148);\n"
 "border-radius: 15px;\n"
@@ -749,8 +749,8 @@ class Ui_MainWindow(object):
 "QPushButton:pressed {\n"
 "background-color: rgb(19, 163, 108)\n"
 "}")
-        self.supplierFilterClearBtn.setObjectName("supplierFilterClearBtn")
-        self.horizontalLayout_3.addWidget(self.supplierFilterClearBtn)
+        self.companyFilterClearBtn.setObjectName("companyFilterClearBtn")
+        self.horizontalLayout_3.addWidget(self.companyFilterClearBtn)
         spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem6)
         self.verticalLayout_5.addLayout(self.horizontalLayout_3)
@@ -1882,7 +1882,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
-        self.reportsTab2.setCurrentIndex(1)
+        self.reportsTab2.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.productsTable.setColumnWidth(0, 300)
@@ -1895,6 +1895,32 @@ class Ui_MainWindow(object):
         self.categoriesTable.setColumnWidth(0, 300)
         self.categoriesTable.setColumnWidth(1, 1000)
 
+        self.companiesTable.setColumnWidth(0, 300)
+        self.companiesTable.setColumnWidth(1, 300)
+        self.companiesTable.setColumnWidth(2, 300)
+        self.companiesTable.setColumnWidth(3, 200)
+        self.companiesTable.setColumnWidth(4, 300)
+
+        self.receiptsTable.setColumnWidth(0, 200)
+        self.receiptsTable.setColumnWidth(1, 200)
+        self.receiptsTable.setColumnWidth(2, 200)
+        self.receiptsTable.setColumnWidth(3, 200)
+        self.receiptsTable.setColumnWidth(4, 300)
+
+        self.writeoffsTable.setColumnWidth(0, 200)
+        self.writeoffsTable.setColumnWidth(1, 200)
+        self.writeoffsTable.setColumnWidth(2, 200)
+        self.writeoffsTable.setColumnWidth(3, 200)
+        self.writeoffsTable.setColumnWidth(4, 1000)
+
+        self.inventoryMovementTable.setColumnWidth(0, 300)
+        self.inventoryMovementTable.setColumnWidth(1, 200)
+        self.inventoryMovementTable.setColumnWidth(2, 200)
+        self.inventoryMovementTable.setColumnWidth(3, 200)
+        self.inventoryMovementTable.setColumnWidth(4, 210)
+        self.inventoryMovementTable.setColumnWidth(5, 300)
+        self.inventoryMovementTable.setColumnWidth(6, 350)
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Inventory"))
@@ -1903,8 +1929,8 @@ class Ui_MainWindow(object):
         self.productFilterCB.setItemText(1, _translate("MainWindow", "Freight"))
         self.productFilterCB.setItemText(2, _translate("MainWindow", "Unit price"))
         self.productFilterCB.setItemText(3, _translate("MainWindow", "Units in stock"))
-        self.productFilterCB.setItemText(4, _translate("MainWindow", "Category"))
-        self.productFilterCB.setItemText(5, _translate("MainWindow", "Supplier"))
+        self.productFilterCB.setItemText(4, _translate("MainWindow", "Category name"))
+        self.productFilterCB.setItemText(5, _translate("MainWindow", "Company name"))
         self.productFilterPTE.setPlaceholderText(_translate("MainWindow", "Enter the request"))
         self.productFilterBtn.setText(_translate("MainWindow", "OK"))
         self.productFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
@@ -1946,19 +1972,19 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Description"))
         self.categoryNameLabel.setText(_translate("MainWindow", "Category name"))
         self.addCategoryBtn.setText(_translate("MainWindow", "ADD"))
-        self.delCateogryBtn.setText(_translate("MainWindow", "DELETE"))
+        self.delCategoryBtn.setText(_translate("MainWindow", "DELETE"))
         self.categoryDescriptionPTE.setPlaceholderText(_translate("MainWindow", "Enter the description"))
         self.categoryNamePTE.setPlaceholderText(_translate("MainWindow", "Enter the category name"))
         self.categoryDescriptionLabel.setText(_translate("MainWindow", "Description"))
         self.companyFilterCB.setItemText(0, _translate("MainWindow", "Company name"))
-        self.companyFilterCB.setItemText(1, _translate("MainWindow", "City"))
-        self.companyFilterCB.setItemText(2, _translate("MainWindow", "Country"))
-        self.companyFilterCB.setItemText(3, _translate("MainWindow", "Phone"))
-        self.companyFilterCB.setItemText(4, _translate("MainWindow", "Homepage"))
+        self.companyFilterCB.setItemText(1, _translate("MainWindow", "Company city"))
+        self.companyFilterCB.setItemText(2, _translate("MainWindow", "Company country"))
+        self.companyFilterCB.setItemText(3, _translate("MainWindow", "Company phone"))
+        self.companyFilterCB.setItemText(4, _translate("MainWindow", "Company homepage"))
         self.companyFilterPTE.setPlaceholderText(_translate("MainWindow", "Enter the request"))
         self.companyFilterBtn.setText(_translate("MainWindow", "OK"))
-        self.supplierFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
-        self.companiesTagsLabel.setText(_translate("MainWindow", "Tags:"))
+        self.companyFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
+        self.companiesTagsLabel.setText(_translate("MainWindow", "Tags"))
         item = self.companiesTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Company name"))
         item = self.companiesTable.horizontalHeaderItem(1)

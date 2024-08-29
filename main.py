@@ -1,20 +1,28 @@
 import sys
 import psycopg2
+import datetime
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 from mainwindow import Ui_MainWindow
 from config import host, user, password, db_name
 
 
 class Database:
-    '''Database
-    '''
+    """Database
+    """
 
     def __init__(self, connection):
         self.productFilterDict = {}
         self.copiedProduct = []
 
         self.categoryFilterStr = ''
+
+        self.companyFilterDict = {}
+        self.copiedCompany = []
+
+        self.receiptFilterInt = ''
+
+        self.write_offFilterInt = ''
 
         self.connection = connection
         self.cursor = connection.cursor()
@@ -161,23 +169,60 @@ class Database:
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def showSuppliers(self, parameters=()):
-        columns = ['company_name', 'company_city', 'company_country', 'company_phone', 'company_homepage']
-        notEmptyColumns = [x for x in parameters if x != ""]
-        if len(notEmptyColumns) > 0:
-            query = ('SELECT company_name, company_city, company_country, company_phone,'
-                     'company_homepage FROM companies WHERE {0} = %s').format(
-                ' = %s AND '.join([columns[x] for x in range(5) if parameters[x] != ""]))
-            self.cursor.execute(query, tuple(notEmptyColumns))
+    def showSuppliers(self, parameters):
+        if len(parameters) == 0:
+            query = """SELECT company_name, company_city, company_country, company_phone, company_homepage
+                    FROM companies ORDER BY company_id"""
         else:
-            query = ('SELECT company_name, company_city, company_country,'
-                     'company_phone, company_homepage FROM companies')
+            conditions = []
+            for i in parameters:
+                if parameters.get(i) != "":
+                    string = "'" + parameters[i] + "'"
+                    conditions.append(f"{i} = {string}")
+            query = """SELECT company_name, company_city, company_country, company_phone, company_homepage
+                    FROM companies WHERE {0} ORDER BY company_id""".format(' AND '.join(conditions))
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def showCategories(self, name=""):
+        if name:
+            query = 'SELECT category_name, category_description FROM categories WHERE category_name = %s'
+            self.cursor.execute(query, (name,))
+        else:
+            query = 'SELECT category_name, category_description FROM categories'
             self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def showCategories(self):
-        query = 'SELECT category_name, category_description FROM categories'
-        self.cursor.execute(query)
+    def show_receipts(self, order_number):
+        if not order_number:
+            query = """SELECT order_number, order_date, product_name, amount, company_name
+                    FROM receipts
+                    JOIN products USING (product_id)
+                    JOIN suppliers ON receipts.supplier_id = suppliers.supplier_id
+                    JOIN companies USING (company_id)"""
+            self.cursor.execute(query)
+        else:
+            query = """SELECT order_number, order_date, product_name, amount, company_name
+                    FROM receipts
+                    JOIN products USING (product_id)
+                    JOIN suppliers ON receipts.supplier_id = suppliers.supplier_id
+                    JOIN companies USING (company_id)
+                    WHERE order_number = %s"""
+            self.cursor.execute(query, (order_number,))
+        return self.cursor.fetchall()
+
+    def show_write_offs(self, order_number):
+        if not order_number:
+            query = """SELECT order_number, order_date, product_name, amount, reason
+                    FROM write_offs
+                    JOIN products USING (product_id)"""
+            self.cursor.execute(query)
+        else:
+            query = """SELECT order_number, order_date, product_name, amount, reason
+                    FROM write_offs
+                    JOIN products USING (product_id)
+                    WHERE order_number = %s"""
+            self.cursor.execute(query, (order_number,))
         return self.cursor.fetchall()
 
     def addReceipts(self, parameters):
@@ -231,7 +276,9 @@ class Database:
         7 - write-off's most frequent reason;
         """
         # Convert count to days
-        actions = {'days': lambda x: count, 'months': lambda x: count * 30, 'years': lambda x: count * 365}
+        actions = {'days': lambda x: x,
+                   'months': lambda x: x * 30,
+                   'years': lambda x: x * 365}
         action = actions.get(timeunit)
         count = action(count)
         # Get the receipts
@@ -244,6 +291,7 @@ class Database:
                 GROUP BY product_name, company_name"""
         self.cursor.execute(query, (count,))
         receipts = self.cursor.fetchall()
+        print(receipts)
         # Get the most frequent reasons
         query = """SELECT product_id, reason, COUNT(*)
                 FROM write_offs
@@ -259,6 +307,7 @@ class Database:
                 pass
         if res[-1] != res[-2]:
             most_frequent_reasons.append(res[-1])
+        print(most_frequent_reasons)
         # Get the write-offs
         query = """SELECT product_name, MAX(order_date), SUM(amount)
                 FROM write_offs
@@ -268,6 +317,7 @@ class Database:
         self.cursor.execute(query, (count,))
         write_offs = self.cursor.fetchall()
         write_offs = tuple([list(write_offs[x]) + [most_frequent_reasons[x][1]] for x in range(len(write_offs))])
+        print(write_offs)
         # Return the report result
         return [(receipts[x][0], receipts[x][1], write_offs[x][1],
                  receipts[x][2], write_offs[x][2], receipts[x][3], write_offs[x][3]) for x in range(len(receipts))]
@@ -294,18 +344,16 @@ ui.setupUi(MainWindow)
 MainWindow.show()
 
 
-# Convert dictionary to tuple
-def conv_prod_dic(user_dict: dict):
-    columns = ('Product name', 'Freight', 'Unit price', 'Units in stock', 'Category', 'Supplier')
-    res = []
-    for column in columns:
-        for item in user_dict:
-            if column == item:
-                res.append(user_dict[item])
-    return res
-
-
 # Connection Database and GUI functions
+def show_error(message):
+    error = QMessageBox()
+    error.setWindowTitle('Error!')
+    error.setText(message)
+    error.setIcon(QMessageBox.Critical)
+
+    error.exec_()
+
+
 def output_products_gui():
     if ui.productFilterPTE.toPlainText():
         # Set the value
@@ -322,9 +370,100 @@ def output_products_gui():
         populate_table(ui.productsTable, sqlquery, 6)
 
 
+def output_categories_gui():
+    if ui.categoryFilterPTE.toPlainText():
+        db.categoryFilterStr = ui.categoryFilterPTE.toPlainText()
+        # Add a tag text
+        text = 'Category name: ' + ui.categoryFilterPTE.toPlainText()
+        ui.categoriesTagsLabel.setText(text)
+        ui.categoryFilterPTE.setPlainText("")
+    else:
+        sqlquery = db.showCategories(db.categoryFilterStr)
+        populate_table(ui.categoriesTable, sqlquery, 2)
+
+
+def output_companies_gui():
+    if ui.companyFilterPTE.toPlainText():
+        # Add a tag to the dictionary
+        db.companyFilterDict[ui.companyFilterCB.currentText().lower().replace(' ', '_')] = ui.companyFilterPTE.toPlainText()
+        # Add a tag text
+        text = 'Tags | ' + str(db.companyFilterDict).replace("'", "")[1:-1]
+        ui.companiesTagsLabel.setText(text)
+        ui.companyFilterPTE.setPlainText("")
+    else:
+        sqlquery = db.showSuppliers(db.companyFilterDict)
+        populate_table(ui.companiesTable, sqlquery, 5)
+
+
+def output_receipts_gui():
+    if ui.receiptFilterPTE.toPlainText():
+        try:
+            db.receiptFilterInt = int(ui.receiptFilterPTE.toPlainText())
+            # Add a tag text
+            text = f'Order number: {ui.receiptFilterPTE.toPlainText()}'
+            ui.receiptsTagsLabel.setText(text)
+            ui.receiptFilterPTE.setPlainText("")
+        except ValueError:
+            show_error("The order number must not contain any symbols except for digits!")
+    else:
+        sqlquery = db.show_receipts(db.receiptFilterInt)
+        populate_table(ui.receiptsTable, sqlquery, 5)
+
+
+def output_write_offs_gui():
+    if ui.writeoffFilterPTE.toPlainText():
+        try:
+            db.write_offFilterInt = int(ui.writeoffFilterPTE.toPlainText())
+            # Add a tag text
+            text = f'Order number: {ui.writeoffFilterPTE.toPlainText()}'
+            ui.writeoffsTagsLabel.setText(text)
+            ui.writeoffFilterPTE.setPlainText("")
+        except ValueError:
+            ui.writeoffFilterPTE.setPlainText("")
+            show_error("The order number must not contain any symbols except for digits!")
+    else:
+        sqlquery = db.show_write_offs(db.write_offFilterInt)
+        populate_table(ui.writeoffsTable, sqlquery, 5)
+
+
+def output_inventory_movement_report_gui():
+    try:
+        parameters = get_inventory_movement_parameters_gui()
+        sqlquery = db.inventoryMovementReport(parameters[0], parameters[1])
+        print(sqlquery)
+        populate_table(ui.inventoryMovementTable, sqlquery, 7)
+    except Exception as e:
+        print(e)
+
+
 def clear_product_filter():
     db.productFilterDict = {}
     ui.productsTagsLabel.setText('Tags')
+    output_products_gui()
+
+
+def clear_category_filter():
+    db.categoryFilterStr = ""
+    ui.categoriesTagsLabel.setText('Category name:')
+    output_categories_gui()
+
+
+def clear_company_filter():
+    db.companyFilterDict = {}
+    ui.companiesTagsLabel.setText('Tags')
+    output_companies_gui()
+
+
+def clear_receipt_filter():
+    db.receiptFilterInt = ""
+    ui.receiptsTagsLabel.setText('Order number: ')
+    output_receipts_gui()
+
+
+def clear_write_off_filter():
+    db.write_offFilterInt = ""
+    ui.writeoffsTagsLabel.setText('Order number: ')
+    output_write_offs_gui()
 
 
 def get_product_parameters_gui():
@@ -338,11 +477,88 @@ def get_product_parameters_gui():
     )
 
 
+def get_category_parameters_gui():
+    return (
+        ui.categoryNamePTE.toPlainText(),
+        ui.categoryDescriptionPTE.toPlainText()
+    )
+
+
+def get_company_parameters_gui():
+    return (
+        ui.companyNamePTE.toPlainText(),
+        ui.cityPTE.toPlainText(),
+        ui.countryPTE.toPlainText(),
+        ui.phonePTE.toPlainText(),
+        ui.homepagePTE.toPlainText()
+    )
+
+
+def get_receipt_parameters_gui():
+    date = datetime.datetime.strptime(ui.receiptOrderDatePTE.toPlainText(), '%Y-%m-%d').date()
+    return (
+        int(ui.receiptOrderNumberPTE.toPlainText()),
+        date,
+        ui.receiptProductNamePTE.toPlainText(),
+        int(ui.receiptAmountPTE.toPlainText()),
+        ui.receiptSupplierPTE.toPlainText()
+    )
+
+
+def get_write_off_parameters_gui():
+    date = datetime.datetime.strptime(ui.writeoffOrderDatePTE.toPlainText(), '%Y-%m-%d').date()
+    return (
+        int(ui.writeoffOrderNumberPTE.toPlainText()),
+        date,
+        ui.writeoffProductNamePTE.toPlainText(),
+        int(ui.writeoffAmountPTE.toPlainText()),
+        ui.writeoffReasonPTE.toPlainText()
+    )
+
+
+def get_inventory_movement_parameters_gui():
+    return (
+        int(ui.IMTimePeriodPTE.toPlainText()),
+        ui.IMTimeUnitCB.currentText().lower()
+    )
+
+
 def copy_product_gui(row):
     items = [ui.productsTable.item(row, col).text() for col in range(ui.productsTable.columnCount())]
     text_fields = (ui.productNamePTE, ui.freightPTE, ui.unitPricePTE, ui.unitsInStockPTE,
                    ui.productsCategoryPTE, ui.productsSupplierPTE)
     db.copiedProduct = tuple(items)
+    for i in range(len(text_fields)):
+        text_fields[i].setPlainText(items[i])
+
+
+def copy_category_gui(row):
+    items = [ui.categoriesTable.item(row, col).text() for col in range(ui.categoriesTable.columnCount())]
+    text_fields = (ui.categoryNamePTE, ui.categoryDescriptionPTE)
+    for i in range(len(text_fields)):
+        text_fields[i].setPlainText(items[i])
+
+
+def copy_company_gui(row):
+    items = [ui.companiesTable.item(row, col).text() for col in range(ui.companiesTable.columnCount())]
+    text_fields = (ui.companyNamePTE, ui.cityPTE, ui.countryPTE, ui.phonePTE, ui.homepagePTE)
+    db.copiedCompany = tuple(items)
+    for i in range(len(text_fields)):
+        text_fields[i].setPlainText(items[i])
+
+
+def copy_receipt_gui(row):
+    items = [ui.receiptsTable.item(row, col).text() for col in range(ui.receiptsTable.columnCount())]
+    text_fields = (ui.receiptOrderNumberPTE, ui.receiptOrderDatePTE, ui.receiptProductNamePTE,
+                   ui.receiptAmountPTE, ui.receiptSupplierPTE)
+    for i in range(len(text_fields)):
+        text_fields[i].setPlainText(items[i])
+
+
+def copy_write_off_gui(row):
+    items = [ui.writeoffsTable.item(row, col).text() for col in range(ui.writeoffsTable.columnCount())]
+    text_fields = (ui.writeoffOrderNumberPTE, ui.writeoffOrderDatePTE, ui.writeoffProductNamePTE,
+                   ui.writeoffAmountPTE, ui.writeoffReasonPTE)
     for i in range(len(text_fields)):
         text_fields[i].setPlainText(items[i])
 
@@ -353,10 +569,64 @@ def add_product_gui():
     output_products_gui()
 
 
+def add_category_gui():
+    category = get_category_parameters_gui()
+    db.manageCategories(category, 'add')
+    output_categories_gui()
+
+
+def add_company_gui():
+    company = get_company_parameters_gui()
+    db.addSuppliers(company)
+    output_companies_gui()
+
+
+def confirm_receipt_gui():
+    receipt = get_receipt_parameters_gui()
+    db.addReceipts(receipt)
+    output_receipts_gui()
+
+
+def confirm_write_off_gui():
+    write_off = get_write_off_parameters_gui()
+    db.addWriteOffs(write_off)
+    output_write_offs_gui()
+
+
 def del_product_gui():
     product = get_product_parameters_gui()
     db.updateProducts(product, 'delete')
     output_products_gui()
+
+
+def del_category_gui():
+    try:
+        category = get_category_parameters_gui()
+        db.manageCategories(category, 'delete')
+        output_categories_gui()
+    except:
+        show_error("You first need to change the category in the other tables before deleting the category!")
+
+
+def del_company_gui():
+    try:
+        company = get_company_parameters_gui()
+        db.deleteSuppliers(company)
+        output_companies_gui()
+    except:
+        show_error("You first need to change the company in the other tables before deleting the company!")
+
+
+def cancel_receipt_gui():
+    receipt = get_receipt_parameters_gui()
+    db.cancelReceipt(receipt[0])
+    output_receipts_gui()
+
+
+def cancel_write_off_gui():
+    write_off = get_write_off_parameters_gui()
+    db.cancelWriteOff(write_off[0])
+    output_write_offs_gui()
 
 
 def chg_product_gui():
@@ -366,12 +636,26 @@ def chg_product_gui():
     output_products_gui()
 
 
+def chg_company_gui():
+    old_parameters = db.copiedCompany
+    new_parameters = get_company_parameters_gui()
+    db.editSuppliers(new_parameters+old_parameters)
+    output_companies_gui()
+
+
 def populate_table(table, data, column_count):
     table.setRowCount(len(data))
     for row_index, row_data in enumerate(data):
         for column_index in range(column_count):
             table.setItem(row_index, column_index, QtWidgets.QTableWidgetItem(str(row_data[column_index])))
 
+
+# Populate tables
+output_products_gui()
+output_categories_gui()
+output_companies_gui()
+output_receipts_gui()
+output_write_offs_gui()
 
 # Modulate main window
 ui.productFilterBtn.clicked.connect(lambda: output_products_gui())
@@ -380,5 +664,32 @@ ui.addProductBtn.clicked.connect(lambda: add_product_gui())
 ui.delProductBtn.clicked.connect(lambda: del_product_gui())
 ui.chgProductBtn.clicked.connect(lambda: chg_product_gui())
 ui.productsTable.verticalHeader().sectionClicked.connect(copy_product_gui)
+
+ui.categoryFilterBtn.clicked.connect(lambda: output_categories_gui())
+ui.categoryFilterClearBtn.clicked.connect(lambda: clear_category_filter())
+ui.addCategoryBtn.clicked.connect(lambda: add_category_gui())
+ui.delCategoryBtn.clicked.connect(lambda: del_category_gui())
+ui.categoriesTable.verticalHeader().sectionClicked.connect(copy_category_gui)
+
+ui.companyFilterBtn.clicked.connect(lambda: output_companies_gui())
+ui.companyFilterClearBtn.clicked.connect(lambda: clear_company_filter())
+ui.addCompanyBtn.clicked.connect(lambda: add_company_gui())
+ui.delCompanyBtn.clicked.connect(lambda: del_company_gui())
+ui.chgCompanyBtn.clicked.connect(lambda: chg_company_gui())
+ui.companiesTable.verticalHeader().sectionClicked.connect(copy_company_gui)
+
+ui.receiptFilterBtn.clicked.connect(lambda: output_receipts_gui())
+ui.receiptFilterClearBtn.clicked.connect(lambda: clear_receipt_filter())
+ui.receiptConfirmBtn.clicked.connect(lambda: confirm_receipt_gui())
+ui.receiptCancelBtn.clicked.connect(lambda: cancel_receipt_gui())
+ui.receiptsTable.verticalHeader().sectionClicked.connect(copy_receipt_gui)
+
+ui.writeoffFilterBtn.clicked.connect(lambda: output_write_offs_gui())
+ui.writeoffFilterClearBtn.clicked.connect(lambda: clear_write_off_filter())
+ui.writeoffConfirm.clicked.connect(lambda: confirm_write_off_gui())
+ui.writeoffCancel.clicked.connect(lambda: cancel_write_off_gui())
+ui.writeoffsTable.verticalHeader().sectionClicked.connect(copy_write_off_gui)
+
+ui.IMViewBtn.clicked.connect(lambda: output_inventory_movement_report_gui())
 
 sys.exit(mainwindow.exec_())
