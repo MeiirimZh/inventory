@@ -34,21 +34,20 @@ class Database:
         self.cursor.close()
         self.connection.close()
 
-    def addSuppliers(self, parameters):
+    def add_suppliers(self, parameters):
         # Parameters: company_name, company_city, company_country, company_phone, company_homepage
         query = """SELECT company_id FROM companies WHERE company_name = %s AND company_city = %s AND
                 company_country = %s AND company_phone = %s AND company_homepage = %s"""
         self.cursor.execute(query, parameters)
         if self.cursor.fetchone() is None:
             query = """INSERT INTO companies (company_name, company_city, company_country, company_phone,
-                    company_homepage) VALUES (%s, %s, %s, %s, %s)"""
+                    company_homepage) VALUES (%s, %s, %s, %s, %s);
+                    INSERT INTO suppliers (company_id) VALUES ((SELECT MAX(company_id) FROM companies))"""
             self.cursor.execute(query, parameters)
-            query = "INSERT INTO suppliers (company_id) VALUES ((SELECT MAX(company_id) FROM companies))"
-            self.cursor.execute(query)
         else:
             raise ValueError
 
-    def deleteSuppliers(self, parameters):
+    def delete_suppliers(self, parameters):
         # Parameters: company_name, company_city, company_country, company_phone, company_homepage
         # Get the index of the delete record
         query = """SELECT company_id FROM companies WHERE company_name = %s AND company_city = %s AND
@@ -635,9 +634,12 @@ def add_category_gui():
 
 
 def add_company_gui():
-    company = get_company_parameters_gui()
-    db.addSuppliers(company)
-    output_companies_gui()
+    try:
+        company = get_company_parameters_gui()
+        db.add_suppliers(company)
+        output_companies_gui()
+    except ValueError:
+        show_error("A company with the same parameters already exists!")
 
 
 def confirm_receipt_gui():
@@ -670,7 +672,7 @@ def del_category_gui():
 def del_company_gui():
     try:
         company = get_company_parameters_gui()
-        db.deleteSuppliers(company)
+        db.delete_suppliers(company)
         output_companies_gui()
     except:
         show_error("You first need to change the company in the other tables before deleting the company!")
