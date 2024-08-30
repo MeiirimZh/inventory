@@ -4,6 +4,7 @@ import datetime
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from mainwindow import Ui_MainWindow
+from authorizationwindow import Ui_Authorization
 from config import host, user, password, db_name
 
 
@@ -230,6 +231,11 @@ class Database:
         self.cursor.execute(query)
         return [f"{x[0]} {x[2]} {x[1]}" if x[2] else f"{x[0]} {x[1]}" for x in self.cursor.fetchall()]
 
+    def get_users(self, username, password):
+        query = "SELECT user_name, user_password FROM users WHERE user_name = %s AND user_password = %s"
+        self.cursor.execute(query, (username, password))
+        return True if len(self.cursor.fetchall()) != 0 else False
+
     def addReceipts(self, parameters):
         # Get the product_id
         query = "SELECT product_id FROM products WHERE product_name = %s"
@@ -361,13 +367,19 @@ class Database:
 # Initialize Database object
 db = Database(psycopg2.connect(host=host, user=user, password=password, database=db_name))
 
-mainwindow = QtWidgets.QApplication(sys.argv)
+# Main window
+app = QtWidgets.QApplication(sys.argv)
 font = QtGui.QFont("Nunito")
-mainwindow.setFont(font)
+app.setFont(font)
 MainWindow = QtWidgets.QMainWindow()
 ui = Ui_MainWindow()
 ui.setupUi(MainWindow)
-MainWindow.show()
+
+# Authorization window
+Authorization = QtWidgets.QMainWindow()
+uiAuthorize = Ui_Authorization()
+uiAuthorize.setupUi(Authorization)
+Authorization.show()
 
 
 # Connection Database and GUI functions
@@ -378,6 +390,17 @@ def show_error(message):
     error.setIcon(QMessageBox.Critical)
 
     error.exec_()
+
+
+def signIn():
+    username = uiAuthorize.usernamePTE.toPlainText()
+    password = uiAuthorize.passwordLE.text()
+    res = db.get_users(username, password)
+    if res:
+        MainWindow.show()
+        Authorization.close()
+    else:
+        show_error("Invalid username and/or password!")
 
 
 def output_products_gui():
@@ -735,4 +758,7 @@ ui.IMViewBtn.clicked.connect(lambda: output_inventory_movement_report_gui())
 
 ui.SLOBTable.verticalHeader().sectionClicked.connect(copy_slob_gui)
 
-sys.exit(mainwindow.exec_())
+# Modulate authorization window
+uiAuthorize.loginBtn.clicked.connect(lambda: signIn())
+
+sys.exit(app.exec_())
