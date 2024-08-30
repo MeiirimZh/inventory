@@ -54,13 +54,10 @@ class Database:
                 company_country = %s AND company_phone = %s AND company_homepage = %s"""
         self.cursor.execute(query, parameters)
         res = self.cursor.fetchone()[0]
-        # Delete supplier
-        query = f"""DELETE FROM suppliers WHERE supplier_id = {res}"""
-        self.cursor.execute(query)
-        # Delete company
-        query = """DELETE FROM companies WHERE company_name = %s AND company_city = %s AND
-                company_country = %s AND company_phone = %s AND company_homepage = %s"""
-        self.cursor.execute(query, parameters)
+        # Delete supplier and company
+        query = f"""DELETE FROM suppliers WHERE supplier_id = %s;;
+                DELETE FROM companies WHERE company_id = %s"""
+        self.cursor.execute(query, (res, res))
 
     def editSuppliers(self, parameters: tuple):
         query = """UPDATE companies SET company_name = %s, company_city = %s, company_country = %s, 
