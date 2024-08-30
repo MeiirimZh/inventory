@@ -1921,6 +1921,14 @@ class Ui_MainWindow(object):
         self.inventoryMovementTable.setColumnWidth(5, 300)
         self.inventoryMovementTable.setColumnWidth(6, 350)
 
+        self.SLOBTable.setColumnWidth(0, 300)
+        self.SLOBTable.setColumnWidth(1, 200)
+        self.SLOBTable.setColumnWidth(2, 200)
+        self.SLOBTable.setColumnWidth(3, 200)
+
+        self.IMManagerCB.setMinimumSize(250, 30)
+        self.SLOBManagerCB.setMinimumSize(250, 30)
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Inventory"))

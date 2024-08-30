@@ -225,6 +225,11 @@ class Database:
             self.cursor.execute(query, (order_number,))
         return self.cursor.fetchall()
 
+    def show_managers(self):
+        query = "SELECT manager_name, manager_surname, manager_middlename FROM managers"
+        self.cursor.execute(query)
+        return [f"{x[0]} {x[2]} {x[1]}" if x[2] else f"{x[0]} {x[1]}" for x in self.cursor.fetchall()]
+
     def addReceipts(self, parameters):
         # Get the product_id
         query = "SELECT product_id FROM products WHERE product_name = %s"
@@ -291,7 +296,6 @@ class Database:
                 GROUP BY product_name, company_name"""
         self.cursor.execute(query, (count,))
         receipts = self.cursor.fetchall()
-        print(receipts)
         # Get the most frequent reasons
         query = """SELECT product_id, reason, COUNT(*)
                 FROM write_offs
@@ -307,8 +311,6 @@ class Database:
                 pass
         if res[-1] != res[-2]:
             most_frequent_reasons.append(res[-1])
-        print(most_frequent_reasons)
-        # Get the write-offs
         query = """SELECT product_name, MAX(order_date), SUM(amount)
                 FROM write_offs
                 JOIN products USING(product_id)
@@ -316,11 +318,35 @@ class Database:
                 GROUP BY product_name"""
         self.cursor.execute(query, (count,))
         write_offs = self.cursor.fetchall()
-        write_offs = tuple([list(write_offs[x]) + [most_frequent_reasons[x][1]] for x in range(len(write_offs))])
-        print(write_offs)
-        # Return the report result
-        return [(receipts[x][0], receipts[x][1], write_offs[x][1],
-                 receipts[x][2], write_offs[x][2], receipts[x][3], write_offs[x][3]) for x in range(len(receipts))]
+        write_offs = [list(write_offs[x]) + [most_frequent_reasons[x][1]] for x in range(len(write_offs))]
+        # Generate the report
+        res = []
+        less = receipts if len(receipts) <= len(write_offs) else write_offs
+        greater = receipts if len(receipts) > len(write_offs) else write_offs
+        to_remove_from_less = []
+        to_remove_from_greater = []
+        # Add the full records
+        for i in less:
+            for j in greater:
+                if i[0] == j[0]:
+                    value = (i[0], i[1], j[1], i[2], j[2], i[3], j[3]) if less == receipts else \
+                        (j[0], j[1], i[1], j[2], i[2], j[3], i[3])
+                    res.append(value)
+                    to_remove_from_less.append(i)
+                    to_remove_from_greater.append(j)
+        # Remove the matched items
+        for i in to_remove_from_less:
+            less.remove(i)
+        for i in to_remove_from_greater:
+            greater.remove(i)
+        # Add the receipt only records
+        for i in receipts:
+            res.append((i[0], i[1], "-", i[2], 0, i[3], "-"))
+        # Add the write-off only records
+        for i in write_offs:
+            res.append((i[0], "-", i[1], 0, i[2], "", i[3]))
+        # Return the report
+        return res
 
     def SLOBInventoryReport(self):
         query = """SELECT product_name, MAX(order_date), SUM(amount), unit_price*units_in_stock
@@ -427,13 +453,14 @@ def output_write_offs_gui():
 
 
 def output_inventory_movement_report_gui():
-    try:
-        parameters = get_inventory_movement_parameters_gui()
-        sqlquery = db.inventoryMovementReport(parameters[0], parameters[1])
-        print(sqlquery)
-        populate_table(ui.inventoryMovementTable, sqlquery, 7)
-    except Exception as e:
-        print(e)
+    parameters = get_inventory_movement_parameters_gui()
+    sqlquery = db.inventoryMovementReport(parameters[0], parameters[1])
+    populate_table(ui.inventoryMovementTable, sqlquery, 7)
+
+
+def output_slob_report_gui():
+    sqlquery = db.SLOBInventoryReport()
+    populate_table(ui.SLOBTable, sqlquery, 4)
 
 
 def clear_product_filter():
@@ -563,6 +590,15 @@ def copy_write_off_gui(row):
         text_fields[i].setPlainText(items[i])
 
 
+def copy_slob_gui(row):
+    items = [ui.SLOBTable.item(row, col).text() for col in range(ui.SLOBTable.columnCount())]
+    if ui.SLOBProductsPTE.toPlainText():
+        text = ui.SLOBProductsPTE.toPlainText() + ', ' + items[0]
+    else:
+        text = items[0]
+    ui.SLOBProductsPTE.setPlainText(text)
+
+
 def add_product_gui():
     product = get_product_parameters_gui()
     db.updateProducts(product, 'add')
@@ -656,6 +692,11 @@ output_categories_gui()
 output_companies_gui()
 output_receipts_gui()
 output_write_offs_gui()
+output_slob_report_gui()
+
+# Add items to combo box
+ui.IMManagerCB.addItems(db.show_managers())
+ui.SLOBManagerCB.addItems(db.show_managers())
 
 # Modulate main window
 ui.productFilterBtn.clicked.connect(lambda: output_products_gui())
@@ -691,5 +732,7 @@ ui.writeoffCancel.clicked.connect(lambda: cancel_write_off_gui())
 ui.writeoffsTable.verticalHeader().sectionClicked.connect(copy_write_off_gui)
 
 ui.IMViewBtn.clicked.connect(lambda: output_inventory_movement_report_gui())
+
+ui.SLOBTable.verticalHeader().sectionClicked.connect(copy_slob_gui)
 
 sys.exit(mainwindow.exec_())
