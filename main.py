@@ -78,7 +78,11 @@ class Database:
         self.cursor.execute(query, parameters)
 
     def clear_table(self, table):
-        query = sql.SQL("TRUNCATE TABLE {} RESTART IDENTITY CASCADE").format(sql.Identifier(table))
+        if table != 'suppliers':
+            query = sql.SQL("TRUNCATE TABLE {} RESTART IDENTITY CASCADE").format(sql.Identifier(table))
+        else:
+            query = """TRUNCATE TABLE suppliers RESTART IDENTITY CASCADE;
+                     TRUNCATE TABLE companies RESTART IDENTITY CASCADE"""
         self.cursor.execute(query)
 
     def update_products(self, product: tuple, action: str):
@@ -530,38 +534,10 @@ def clear_write_off_filter():
     output_write_offs_gui()
 
 
-def truncate_products_gui():
-    db.clear_table('products')
-    output_products_gui()
-    output_receipts_gui()
-    output_write_offs_gui()
-
-
-def truncate_categories_gui():
-    db.clear_table('categories')
-    output_categories_gui()
-    output_products_gui()
-    output_receipts_gui()
-    output_write_offs_gui()
-
-
-def truncate_companies_gui():
-    db.clear_table('companies')
-    db.clear_table('suppliers')
-    output_companies_gui()
-    output_products_gui()
-    output_receipts_gui()
-    output_write_offs_gui()
-
-
-def truncate_receipts_gui():
-    db.clear_table('receipts')
-    output_receipts_gui()
-
-
-def truncate_write_offs_gui():
-    db.clear_table('write_offs')
-    output_write_offs_gui()
+def truncate_table_gui(table, funcs):
+    db.clear_table(table)
+    for func in funcs:
+        func()
 
 
 def get_product_parameters_gui():
@@ -801,7 +777,8 @@ ui.SLOBManagerCB.addItems(db.show_managers())
 # Modulate main window
 ui.productFilterBtn.clicked.connect(lambda: output_products_gui())
 ui.productFilterClearBtn.clicked.connect(lambda: clear_product_filter())
-ui.productsTruncateBtn.clicked.connect(lambda: truncate_products_gui())
+ui.productsTruncateBtn.clicked.connect(lambda: truncate_table_gui('products', (output_products_gui, output_receipts_gui,
+                                                                               output_write_offs_gui)))
 ui.addProductBtn.clicked.connect(lambda: add_product_gui())
 ui.delProductBtn.clicked.connect(lambda: del_product_gui())
 ui.chgProductBtn.clicked.connect(lambda: chg_product_gui())
@@ -809,14 +786,18 @@ ui.productsTable.verticalHeader().sectionClicked.connect(copy_product_gui)
 
 ui.categoryFilterBtn.clicked.connect(lambda: output_categories_gui())
 ui.categoryFilterClearBtn.clicked.connect(lambda: clear_category_filter())
-ui.categoriesTruncateBtn.clicked.connect(lambda: truncate_categories_gui())
+ui.categoriesTruncateBtn.clicked.connect(lambda: truncate_table_gui('categories', (output_categories_gui,
+                                                                                   output_products_gui,
+                                                                                   output_receipts_gui,
+                                                                                   output_write_offs_gui)))
 ui.addCategoryBtn.clicked.connect(lambda: add_category_gui())
 ui.delCategoryBtn.clicked.connect(lambda: del_category_gui())
 ui.categoriesTable.verticalHeader().sectionClicked.connect(copy_category_gui)
 
 ui.companyFilterBtn.clicked.connect(lambda: output_companies_gui())
 ui.companyFilterClearBtn.clicked.connect(lambda: clear_company_filter())
-ui.companiesTruncateBtn.clicked.connect(lambda: truncate_companies_gui())
+ui.companiesTruncateBtn.clicked.connect(lambda: truncate_table_gui('companies', (output_companies_gui,
+                                                                                 output_products_gui)))
 ui.addCompanyBtn.clicked.connect(lambda: add_company_gui())
 ui.delCompanyBtn.clicked.connect(lambda: del_company_gui())
 ui.chgCompanyBtn.clicked.connect(lambda: chg_company_gui())
@@ -824,14 +805,16 @@ ui.companiesTable.verticalHeader().sectionClicked.connect(copy_company_gui)
 
 ui.receiptFilterBtn.clicked.connect(lambda: output_receipts_gui())
 ui.receiptFilterClearBtn.clicked.connect(lambda: clear_receipt_filter())
-ui.receiptsTruncateBtn.clicked.connect(lambda: truncate_receipts_gui())
+ui.receiptsTruncateBtn.clicked.connect(lambda: truncate_table_gui('receipts', (output_receipts_gui,
+                                                                               output_products_gui)))
 ui.receiptConfirmBtn.clicked.connect(lambda: confirm_receipt_gui())
 ui.receiptCancelBtn.clicked.connect(lambda: cancel_receipt_gui())
 ui.receiptsTable.verticalHeader().sectionClicked.connect(copy_receipt_gui)
 
 ui.writeoffFilterBtn.clicked.connect(lambda: output_write_offs_gui())
 ui.writeoffFilterClearBtn.clicked.connect(lambda: clear_write_off_filter())
-ui.writeOffsTruncateBtn.clicked.connect(lambda: truncate_write_offs_gui())
+ui.writeOffsTruncateBtn.clicked.connect(lambda: truncate_table_gui('write_offs', (output_receipts_gui,
+                                                                                  output_products_gui)))
 ui.writeoffConfirm.clicked.connect(lambda: confirm_write_off_gui())
 ui.writeoffCancel.clicked.connect(lambda: cancel_write_off_gui())
 ui.writeoffsTable.verticalHeader().sectionClicked.connect(copy_write_off_gui)
