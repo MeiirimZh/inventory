@@ -136,6 +136,31 @@ class Ui_MainWindow(object):
 "}")
         self.productFilterClearBtn.setObjectName("productFilterClearBtn")
         self.horizontalLayout.addWidget(self.productFilterClearBtn)
+        self.productsTruncateBtn = QtWidgets.QPushButton(self.productsTab)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.productsTruncateBtn.sizePolicy().hasHeightForWidth())
+        self.productsTruncateBtn.setSizePolicy(sizePolicy)
+        self.productsTruncateBtn.setMaximumSize(QtCore.QSize(100, 30))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.productsTruncateBtn.setFont(font)
+        self.productsTruncateBtn.setStyleSheet("QPushButton {\n"
+"color: rgb(30, 28, 55);\n"
+"background-color: rgb(27, 223, 148);\n"
+"border-radius: 15px;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"background-color: rgb(30, 255, 169)\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"background-color: rgb(19, 163, 108)\n"
+"}")
+        self.productsTruncateBtn.setObjectName("productsTruncateBtn")
+        self.horizontalLayout.addWidget(self.productsTruncateBtn)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
@@ -502,6 +527,31 @@ class Ui_MainWindow(object):
 "}")
         self.categoryFilterClearBtn.setObjectName("categoryFilterClearBtn")
         self.horizontalLayout_2.addWidget(self.categoryFilterClearBtn)
+        self.categoriesTruncateBtn = QtWidgets.QPushButton(self.categoriesTab)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.categoriesTruncateBtn.sizePolicy().hasHeightForWidth())
+        self.categoriesTruncateBtn.setSizePolicy(sizePolicy)
+        self.categoriesTruncateBtn.setMaximumSize(QtCore.QSize(100, 30))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.categoriesTruncateBtn.setFont(font)
+        self.categoriesTruncateBtn.setStyleSheet("QPushButton {\n"
+"color: rgb(30, 28, 55);\n"
+"background-color: rgb(27, 223, 148);\n"
+"border-radius: 15px;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"background-color: rgb(30, 255, 169)\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"background-color: rgb(19, 163, 108)\n"
+"}")
+        self.categoriesTruncateBtn.setObjectName("categoriesTruncateBtn")
+        self.horizontalLayout_2.addWidget(self.categoriesTruncateBtn)
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem2)
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
@@ -751,6 +801,31 @@ class Ui_MainWindow(object):
 "}")
         self.companyFilterClearBtn.setObjectName("companyFilterClearBtn")
         self.horizontalLayout_3.addWidget(self.companyFilterClearBtn)
+        self.companiesTruncateBtn = QtWidgets.QPushButton(self.supplierTab)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.companiesTruncateBtn.sizePolicy().hasHeightForWidth())
+        self.companiesTruncateBtn.setSizePolicy(sizePolicy)
+        self.companiesTruncateBtn.setMaximumSize(QtCore.QSize(100, 30))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.companiesTruncateBtn.setFont(font)
+        self.companiesTruncateBtn.setStyleSheet("QPushButton {\n"
+"color: rgb(30, 28, 55);\n"
+"background-color: rgb(27, 223, 148);\n"
+"border-radius: 15px;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"background-color: rgb(30, 255, 169)\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"background-color: rgb(19, 163, 108)\n"
+"}")
+        self.companiesTruncateBtn.setObjectName("companiesTruncateBtn")
+        self.horizontalLayout_3.addWidget(self.companiesTruncateBtn)
         spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem6)
         self.verticalLayout_5.addLayout(self.horizontalLayout_3)
@@ -1075,6 +1150,31 @@ class Ui_MainWindow(object):
 "}")
         self.receiptFilterClearBtn.setObjectName("receiptFilterClearBtn")
         self.horizontalLayout_4.addWidget(self.receiptFilterClearBtn)
+        self.receiptsTruncateBtn = QtWidgets.QPushButton(self.receiptsTab)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.receiptsTruncateBtn.sizePolicy().hasHeightForWidth())
+        self.receiptsTruncateBtn.setSizePolicy(sizePolicy)
+        self.receiptsTruncateBtn.setMaximumSize(QtCore.QSize(100, 30))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.receiptsTruncateBtn.setFont(font)
+        self.receiptsTruncateBtn.setStyleSheet("QPushButton {\n"
+"color: rgb(30, 28, 55);\n"
+"background-color: rgb(27, 223, 148);\n"
+"border-radius: 15px;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"background-color: rgb(30, 255, 169)\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"background-color: rgb(19, 163, 108)\n"
+"}")
+        self.receiptsTruncateBtn.setObjectName("receiptsTruncateBtn")
+        self.horizontalLayout_4.addWidget(self.receiptsTruncateBtn)
         spacerItem8 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem8)
         self.verticalLayout_6.addLayout(self.horizontalLayout_4)
@@ -1375,6 +1475,31 @@ class Ui_MainWindow(object):
 "}")
         self.writeoffFilterClearBtn.setObjectName("writeoffFilterClearBtn")
         self.horizontalLayout_5.addWidget(self.writeoffFilterClearBtn)
+        self.writeOffsTruncateBtn = QtWidgets.QPushButton(self.writeoffsTab)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.writeOffsTruncateBtn.sizePolicy().hasHeightForWidth())
+        self.writeOffsTruncateBtn.setSizePolicy(sizePolicy)
+        self.writeOffsTruncateBtn.setMaximumSize(QtCore.QSize(100, 30))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.writeOffsTruncateBtn.setFont(font)
+        self.writeOffsTruncateBtn.setStyleSheet("QPushButton {\n"
+"color: rgb(30, 28, 55);\n"
+"background-color: rgb(27, 223, 148);\n"
+"border-radius: 15px;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"background-color: rgb(30, 255, 169)\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"background-color: rgb(19, 163, 108)\n"
+"}")
+        self.writeOffsTruncateBtn.setObjectName("writeOffsTruncateBtn")
+        self.horizontalLayout_5.addWidget(self.writeOffsTruncateBtn)
         spacerItem10 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_5.addItem(spacerItem10)
         self.verticalLayout_7.addLayout(self.horizontalLayout_5)
@@ -1942,7 +2067,8 @@ class Ui_MainWindow(object):
         self.productFilterPTE.setPlaceholderText(_translate("MainWindow", "Enter the request"))
         self.productFilterBtn.setText(_translate("MainWindow", "OK"))
         self.productFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
-        self.productsTagsLabel.setText(_translate("MainWindow", "Tags"))
+        self.productsTruncateBtn.setText(_translate("MainWindow", "TRUNCATE"))
+        self.productsTagsLabel.setText(_translate("MainWindow", "Tags:"))
         item = self.productsTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Product name"))
         item = self.productsTable.horizontalHeaderItem(1)
@@ -1973,6 +2099,7 @@ class Ui_MainWindow(object):
         self.categoryFilterPTE.setPlaceholderText(_translate("MainWindow", "Enter the category name"))
         self.categoryFilterBtn.setText(_translate("MainWindow", "OK"))
         self.categoryFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
+        self.categoriesTruncateBtn.setText(_translate("MainWindow", "TRUNCATE"))
         self.categoriesTagsLabel.setText(_translate("MainWindow", "Category name:"))
         item = self.categoriesTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Category name"))
@@ -1992,7 +2119,8 @@ class Ui_MainWindow(object):
         self.companyFilterPTE.setPlaceholderText(_translate("MainWindow", "Enter the request"))
         self.companyFilterBtn.setText(_translate("MainWindow", "OK"))
         self.companyFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
-        self.companiesTagsLabel.setText(_translate("MainWindow", "Tags"))
+        self.companiesTruncateBtn.setText(_translate("MainWindow", "TRUNCATE"))
+        self.companiesTagsLabel.setText(_translate("MainWindow", "Tags:"))
         item = self.companiesTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Company name"))
         item = self.companiesTable.horizontalHeaderItem(1)
@@ -2019,6 +2147,7 @@ class Ui_MainWindow(object):
         self.receiptFilterPTE.setPlaceholderText(_translate("MainWindow", "Enter the order number"))
         self.receiptFilterBtn.setText(_translate("MainWindow", "OK"))
         self.receiptFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
+        self.receiptsTruncateBtn.setText(_translate("MainWindow", "TRUNCATE"))
         self.receiptsTagsLabel.setText(_translate("MainWindow", "Order number:"))
         item = self.receiptsTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Order number"))
@@ -2045,6 +2174,7 @@ class Ui_MainWindow(object):
         self.writeoffFilterPTE.setPlaceholderText(_translate("MainWindow", "Enter the order number"))
         self.writeoffFilterBtn.setText(_translate("MainWindow", "OK"))
         self.writeoffFilterClearBtn.setText(_translate("MainWindow", "CLEAR"))
+        self.writeOffsTruncateBtn.setText(_translate("MainWindow", "TRUNCATE"))
         self.writeoffsTagsLabel.setText(_translate("MainWindow", "Order number:"))
         item = self.writeoffsTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Order number"))

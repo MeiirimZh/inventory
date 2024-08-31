@@ -311,7 +311,7 @@ class Database:
                 most_frequent_reasons.append(res[i])
             else:
                 pass
-        if res[-1] != res[-2]:
+        if len(most_frequent_reasons) > 0 and res[-1] != res[-2]:
             most_frequent_reasons.append(res[-1])
         query = """SELECT product_name, MAX(order_date), SUM(amount)
                 FROM write_offs
@@ -320,7 +320,10 @@ class Database:
                 GROUP BY product_name"""
         self.cursor.execute(query, (count,))
         write_offs = self.cursor.fetchall()
-        write_offs = [list(write_offs[x]) + [most_frequent_reasons[x][1]] for x in range(len(write_offs))]
+        if len(res) > 1:
+            write_offs = [list(write_offs[x]) + [most_frequent_reasons[x][1]] for x in range(len(write_offs))]
+        else:
+            write_offs = [list(write_offs[0]) + [res[0][1]]]
         # Generate the report
         res = []
         less = receipts if len(receipts) <= len(write_offs) else write_offs
@@ -473,9 +476,12 @@ def output_write_offs_gui():
 
 
 def output_inventory_movement_report_gui():
-    parameters = get_inventory_movement_parameters_gui()
-    sqlquery = db.inventory_movement_report(parameters[0], parameters[1])
-    populate_table(ui.inventoryMovementTable, sqlquery, 7)
+    try:
+        parameters = get_inventory_movement_parameters_gui()
+        sqlquery = db.inventory_movement_report(parameters[0], parameters[1])
+        populate_table(ui.inventoryMovementTable, sqlquery, 7)
+    except Exception as e:
+        print(e)
 
 
 def output_slob_report_gui():
@@ -510,6 +516,40 @@ def clear_receipt_filter():
 def clear_write_off_filter():
     db.write_offFilterInt = ""
     ui.writeoffsTagsLabel.setText('Order number: ')
+    output_write_offs_gui()
+
+
+def truncate_products_gui():
+    db.clear_table('products')
+    output_products_gui()
+    output_receipts_gui()
+    output_write_offs_gui()
+
+
+def truncate_categories_gui():
+    db.clear_table('categories')
+    output_categories_gui()
+    output_products_gui()
+    output_receipts_gui()
+    output_write_offs_gui()
+
+
+def truncate_companies_gui():
+    db.clear_table('companies')
+    db.clear_table('suppliers')
+    output_companies_gui()
+    output_products_gui()
+    output_receipts_gui()
+    output_write_offs_gui()
+
+
+def truncate_receipts_gui():
+    db.clear_table('receipts')
+    output_receipts_gui()
+
+
+def truncate_write_offs_gui():
+    db.clear_table('write_offs')
     output_write_offs_gui()
 
 
@@ -620,9 +660,12 @@ def copy_slob_gui(row):
 
 
 def add_product_gui():
-    product = get_product_parameters_gui()
-    db.update_products(product, 'add')
-    output_products_gui()
+    try:
+        product = get_product_parameters_gui()
+        db.update_products(product, 'add')
+        output_products_gui()
+    except TypeError:
+        show_error("It is not possible to add a product with a non-existent category and/or company!")
 
 
 def add_category_gui():
@@ -641,21 +684,42 @@ def add_company_gui():
 
 
 def confirm_receipt_gui():
-    receipt = get_receipt_parameters_gui()
-    db.add_receipts(receipt)
-    output_receipts_gui()
+    try:
+        receipt = get_receipt_parameters_gui()
+        db.add_receipts(receipt)
+        output_receipts_gui()
+    except ValueError as e:
+        error_message = str(e)
+        if 'time data' in error_message:
+            show_error("Incorrect time data! Should be YYYY-MM-DD (Year-Month-Day)!")
+        else:
+            show_error("The order number and the amount must not contain any symbols except digits!")
+    except TypeError:
+        show_error("It is not possible to confirm a receipt with a non-existent product and/or supplier!")
 
 
 def confirm_write_off_gui():
-    write_off = get_write_off_parameters_gui()
-    db.add_write_offs(write_off)
-    output_write_offs_gui()
+    try:
+        write_off = get_write_off_parameters_gui()
+        db.add_write_offs(write_off)
+        output_write_offs_gui()
+    except ValueError as e:
+        error_message = str(e)
+        if 'time data' in error_message:
+            show_error("Incorrect time data! Should be YYYY-MM-DD (Year-Month-Day)!")
+        else:
+            show_error("The order number and the amount must not contain any symbols except digits!")
+    except TypeError:
+        show_error("It is not possible to confirm a write-off with a non-existent product and/or supplier!")
 
 
 def del_product_gui():
-    product = get_product_parameters_gui()
-    db.update_products(product, 'delete')
-    output_products_gui()
+    try:
+        product = get_product_parameters_gui()
+        db.update_products(product, 'delete')
+        output_products_gui()
+    except Exception as e:
+        print(e)
 
 
 def del_category_gui():
@@ -674,6 +738,8 @@ def del_company_gui():
         output_companies_gui()
     except psycopg2.Error:
         show_error("You first need to change the company in the other tables before deleting the company!")
+    except TypeError:
+        show_error("No company meet these parameters!")
 
 
 def cancel_receipt_gui():
@@ -724,6 +790,7 @@ ui.SLOBManagerCB.addItems(db.show_managers())
 # Modulate main window
 ui.productFilterBtn.clicked.connect(lambda: output_products_gui())
 ui.productFilterClearBtn.clicked.connect(lambda: clear_product_filter())
+ui.productsTruncateBtn.clicked.connect(lambda: truncate_products_gui())
 ui.addProductBtn.clicked.connect(lambda: add_product_gui())
 ui.delProductBtn.clicked.connect(lambda: del_product_gui())
 ui.chgProductBtn.clicked.connect(lambda: chg_product_gui())
@@ -731,12 +798,14 @@ ui.productsTable.verticalHeader().sectionClicked.connect(copy_product_gui)
 
 ui.categoryFilterBtn.clicked.connect(lambda: output_categories_gui())
 ui.categoryFilterClearBtn.clicked.connect(lambda: clear_category_filter())
+ui.categoriesTruncateBtn.clicked.connect(lambda: truncate_categories_gui())
 ui.addCategoryBtn.clicked.connect(lambda: add_category_gui())
 ui.delCategoryBtn.clicked.connect(lambda: del_category_gui())
 ui.categoriesTable.verticalHeader().sectionClicked.connect(copy_category_gui)
 
 ui.companyFilterBtn.clicked.connect(lambda: output_companies_gui())
 ui.companyFilterClearBtn.clicked.connect(lambda: clear_company_filter())
+ui.companiesTruncateBtn.clicked.connect(lambda: truncate_companies_gui())
 ui.addCompanyBtn.clicked.connect(lambda: add_company_gui())
 ui.delCompanyBtn.clicked.connect(lambda: del_company_gui())
 ui.chgCompanyBtn.clicked.connect(lambda: chg_company_gui())
@@ -744,12 +813,14 @@ ui.companiesTable.verticalHeader().sectionClicked.connect(copy_company_gui)
 
 ui.receiptFilterBtn.clicked.connect(lambda: output_receipts_gui())
 ui.receiptFilterClearBtn.clicked.connect(lambda: clear_receipt_filter())
+ui.receiptsTruncateBtn.clicked.connect(lambda: truncate_receipts_gui())
 ui.receiptConfirmBtn.clicked.connect(lambda: confirm_receipt_gui())
 ui.receiptCancelBtn.clicked.connect(lambda: cancel_receipt_gui())
 ui.receiptsTable.verticalHeader().sectionClicked.connect(copy_receipt_gui)
 
 ui.writeoffFilterBtn.clicked.connect(lambda: output_write_offs_gui())
 ui.writeoffFilterClearBtn.clicked.connect(lambda: clear_write_off_filter())
+ui.writeOffsTruncateBtn.clicked.connect(lambda: truncate_write_offs_gui())
 ui.writeoffConfirm.clicked.connect(lambda: confirm_write_off_gui())
 ui.writeoffCancel.clicked.connect(lambda: cancel_write_off_gui())
 ui.writeoffsTable.verticalHeader().sectionClicked.connect(copy_write_off_gui)
