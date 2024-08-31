@@ -1,5 +1,6 @@
 import sys
 import psycopg2
+from psycopg2 import sql
 import datetime
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
@@ -77,7 +78,7 @@ class Database:
         self.cursor.execute(query, parameters)
 
     def clear_table(self, table):
-        query = f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"
+        query = sql.SQL("TRUNCATE TABLE {} RESTART IDENTITY CASCADE").format(sql.Identifier(table))
         self.cursor.execute(query)
 
     def update_products(self, product: tuple, action: str):
