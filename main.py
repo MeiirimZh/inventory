@@ -1,8 +1,8 @@
 import sys
 import psycopg2
 import datetime
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5 import QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 from mainwindow import Ui_MainWindow
 from authorizationwindow import Ui_Authorization
 from config import host, user, password, db_name
@@ -59,18 +59,18 @@ class Database:
                 DELETE FROM companies WHERE company_id = %s"""
         self.cursor.execute(query, (res, res))
 
-    def editSuppliers(self, parameters: tuple):
+    def edit_suppliers(self, parameters):
         query = """UPDATE companies SET company_name = %s, company_city = %s, company_country = %s, 
             company_phone = %s, company_homepage = %s
             WHERE company_name = %s AND company_city = %s AND company_country = %s AND 
             company_phone = %s AND company_homepage = %s"""
         self.cursor.execute(query, parameters)
 
-    def clearTable(self, table):
+    def clear_table(self, table):
         query = f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"
         self.cursor.execute(query)
 
-    def updateProducts(self, product: tuple, action: str):
+    def update_products(self, product: tuple, action: str):
         """ Insert two records into 'product' when using edit: the first record is a new value,
         second is a changing record
         """
@@ -136,14 +136,14 @@ class Database:
 
         self.cursor.execute(query, product)
 
-    def manageCategories(self, category, action):
+    def manage_categories(self, category, action):
         if action == "add":
             query = "INSERT INTO categories (category_name, category_description) VALUES (%s, %s)"
         else:
             query = "DELETE FROM categories WHERE category_name = %s AND category_description = %s"
         self.cursor.execute(query, category)
 
-    def showProducts(self, parameters):
+    def show_products(self, parameters):
         if len(parameters) == 0:
             query = """SELECT product_name, freight, unit_price, units_in_stock,
                     category_name, company_name FROM products 
@@ -166,7 +166,7 @@ class Database:
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def showSuppliers(self, parameters):
+    def show_suppliers(self, parameters):
         if len(parameters) == 0:
             query = """SELECT company_name, company_city, company_country, company_phone, company_homepage
                     FROM companies ORDER BY company_id"""
@@ -181,7 +181,7 @@ class Database:
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def showCategories(self, name=""):
+    def show_categories(self, name=""):
         if name:
             query = 'SELECT category_name, category_description FROM categories WHERE category_name = %s'
             self.cursor.execute(query, (name,))
@@ -227,12 +227,12 @@ class Database:
         self.cursor.execute(query)
         return [f"{x[0]} {x[2]} {x[1]}" if x[2] else f"{x[0]} {x[1]}" for x in self.cursor.fetchall()]
 
-    def get_users(self, username, password):
+    def get_users(self, username, user_password):
         query = "SELECT user_name, user_password FROM users WHERE user_name = %s AND user_password = %s"
-        self.cursor.execute(query, (username, password))
+        self.cursor.execute(query, (username, user_password))
         return True if len(self.cursor.fetchall()) != 0 else False
 
-    def addReceipts(self, parameters):
+    def add_receipts(self, parameters):
         # Get the product_id
         query = "SELECT product_id FROM products WHERE product_name = %s"
         self.cursor.execute(query, (parameters[2],))
@@ -249,12 +249,12 @@ class Database:
                 (%s, %s, %s, %s, %s)"""
         self.cursor.execute(query, new_parameters)
 
-    def cancelReceipt(self, order_number):
+    def cancel_receipt(self, order_number):
         query = """DELETE FROM receipts 
                 WHERE order_number = %s"""
         self.cursor.execute(query, (order_number,))
 
-    def addWriteOffs(self, parameters):
+    def add_write_offs(self, parameters):
         # Get the product_id
         query = "SELECT product_id FROM products WHERE product_name = %s"
         self.cursor.execute(query, (parameters[2],))
@@ -267,12 +267,12 @@ class Database:
                 (%s, %s, %s, %s, %s)"""
         self.cursor.execute(query, new_parameters)
 
-    def cancelWriteOff(self, order_number):
+    def cancel_write_off(self, order_number):
         query = """DELETE FROM write_offs
                 WHERE order_number = %s"""
         self.cursor.execute(query, (order_number,))
 
-    def inventoryMovementReport(self, count, timeunit):
+    def inventory_movement_report(self, count, timeunit):
         """Return data description:
         1 - product name;
         2 - last receipt date;
@@ -350,7 +350,7 @@ class Database:
         # Return the report
         return res
 
-    def SLOBInventoryReport(self):
+    def slob_inventory_report(self):
         query = """SELECT product_name, MAX(order_date), SUM(amount), unit_price*units_in_stock
                 FROM write_offs
                 JOIN products USING(product_id)
@@ -388,10 +388,10 @@ def show_error(message):
     error.exec_()
 
 
-def signIn():
+def sign_in():
     username = uiAuthorize.usernamePTE.toPlainText()
-    password = uiAuthorize.passwordLE.text()
-    res = db.get_users(username, password)
+    user_password = uiAuthorize.passwordLE.text()
+    res = db.get_users(username, user_password)
     if res:
         MainWindow.show()
         Authorization.close()
@@ -411,7 +411,7 @@ def output_products_gui():
         ui.productsTagsLabel.setText(text)
         ui.productFilterPTE.setPlainText("")
     else:
-        sqlquery = db.showProducts(db.productFilterDict)
+        sqlquery = db.show_products(db.productFilterDict)
         populate_table(ui.productsTable, sqlquery, 6)
 
 
@@ -423,20 +423,21 @@ def output_categories_gui():
         ui.categoriesTagsLabel.setText(text)
         ui.categoryFilterPTE.setPlainText("")
     else:
-        sqlquery = db.showCategories(db.categoryFilterStr)
+        sqlquery = db.show_categories(db.categoryFilterStr)
         populate_table(ui.categoriesTable, sqlquery, 2)
 
 
 def output_companies_gui():
     if ui.companyFilterPTE.toPlainText():
         # Add a tag to the dictionary
-        db.companyFilterDict[ui.companyFilterCB.currentText().lower().replace(' ', '_')] = ui.companyFilterPTE.toPlainText()
+        db.companyFilterDict[ui.companyFilterCB.currentText().lower().replace(' ', '_')] = \
+            ui.companyFilterPTE.toPlainText()
         # Add a tag text
         text = 'Tags | ' + str(db.companyFilterDict).replace("'", "")[1:-1]
         ui.companiesTagsLabel.setText(text)
         ui.companyFilterPTE.setPlainText("")
     else:
-        sqlquery = db.showSuppliers(db.companyFilterDict)
+        sqlquery = db.show_suppliers(db.companyFilterDict)
         populate_table(ui.companiesTable, sqlquery, 5)
 
 
@@ -473,12 +474,12 @@ def output_write_offs_gui():
 
 def output_inventory_movement_report_gui():
     parameters = get_inventory_movement_parameters_gui()
-    sqlquery = db.inventoryMovementReport(parameters[0], parameters[1])
+    sqlquery = db.inventory_movement_report(parameters[0], parameters[1])
     populate_table(ui.inventoryMovementTable, sqlquery, 7)
 
 
 def output_slob_report_gui():
-    sqlquery = db.SLOBInventoryReport()
+    sqlquery = db.slob_inventory_report()
     populate_table(ui.SLOBTable, sqlquery, 4)
 
 
@@ -620,13 +621,13 @@ def copy_slob_gui(row):
 
 def add_product_gui():
     product = get_product_parameters_gui()
-    db.updateProducts(product, 'add')
+    db.update_products(product, 'add')
     output_products_gui()
 
 
 def add_category_gui():
     category = get_category_parameters_gui()
-    db.manageCategories(category, 'add')
+    db.manage_categories(category, 'add')
     output_categories_gui()
 
 
@@ -641,28 +642,28 @@ def add_company_gui():
 
 def confirm_receipt_gui():
     receipt = get_receipt_parameters_gui()
-    db.addReceipts(receipt)
+    db.add_receipts(receipt)
     output_receipts_gui()
 
 
 def confirm_write_off_gui():
     write_off = get_write_off_parameters_gui()
-    db.addWriteOffs(write_off)
+    db.add_write_offs(write_off)
     output_write_offs_gui()
 
 
 def del_product_gui():
     product = get_product_parameters_gui()
-    db.updateProducts(product, 'delete')
+    db.update_products(product, 'delete')
     output_products_gui()
 
 
 def del_category_gui():
     try:
         category = get_category_parameters_gui()
-        db.manageCategories(category, 'delete')
+        db.manage_categories(category, 'delete')
         output_categories_gui()
-    except:
+    except psycopg2.Error:
         show_error("You first need to change the category in the other tables before deleting the category!")
 
 
@@ -671,33 +672,33 @@ def del_company_gui():
         company = get_company_parameters_gui()
         db.delete_suppliers(company)
         output_companies_gui()
-    except:
+    except psycopg2.Error:
         show_error("You first need to change the company in the other tables before deleting the company!")
 
 
 def cancel_receipt_gui():
     receipt = get_receipt_parameters_gui()
-    db.cancelReceipt(receipt[0])
+    db.cancel_receipt(receipt[0])
     output_receipts_gui()
 
 
 def cancel_write_off_gui():
     write_off = get_write_off_parameters_gui()
-    db.cancelWriteOff(write_off[0])
+    db.cancel_write_off(write_off[0])
     output_write_offs_gui()
 
 
 def chg_product_gui():
-    old_parameters = db.copiedProduct
+    old_parameters = tuple(db.copiedProduct)
     new_parameters = get_product_parameters_gui()
-    db.updateProducts((old_parameters+new_parameters), 'edit')
+    db.update_products((old_parameters+new_parameters), 'edit')
     output_products_gui()
 
 
 def chg_company_gui():
-    old_parameters = db.copiedCompany
+    old_parameters = tuple(db.copiedCompany)
     new_parameters = get_company_parameters_gui()
-    db.editSuppliers(new_parameters+old_parameters)
+    db.edit_suppliers(new_parameters+old_parameters)
     output_companies_gui()
 
 
@@ -758,6 +759,6 @@ ui.IMViewBtn.clicked.connect(lambda: output_inventory_movement_report_gui())
 ui.SLOBTable.verticalHeader().sectionClicked.connect(copy_slob_gui)
 
 # Modulate authorization window
-uiAuthorize.loginBtn.clicked.connect(lambda: signIn())
+uiAuthorize.loginBtn.clicked.connect(lambda: sign_in())
 
 sys.exit(app.exec_())
