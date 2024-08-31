@@ -9,7 +9,17 @@ from config import host, user, password, db_name
 
 
 class Database:
-    """Database
+    """A class for interaction with postgresql database
+    Attributes:
+        productFilterDict   : dict - entered column and value for filtering products table
+        copiedProduct       : list - selected product's parameters
+        categoryFilterStr   : str - entered category name for filtering categories table
+        companyFilterDict   : dict - entered column and value for filtering companies table
+        copiedCompany       : list - selected company's parameters
+        receiptFilterInt    : int - entered order number for filtering receipts table
+        writeOffFilterInt   : int - entered order number for filtering write-offs table
+        connection          : psycopg2.connection - connect to database
+        cursor              : psycopg2.cursor - object to execute queries
     """
 
     def __init__(self, connection):
@@ -23,7 +33,7 @@ class Database:
 
         self.receiptFilterInt = ''
 
-        self.write_offFilterInt = ''
+        self.writeOffFilterInt = ''
 
         self.connection = connection
         self.cursor = connection.cursor()
@@ -462,7 +472,7 @@ def output_receipts_gui():
 def output_write_offs_gui():
     if ui.writeoffFilterPTE.toPlainText():
         try:
-            db.write_offFilterInt = int(ui.writeoffFilterPTE.toPlainText())
+            db.writeOffFilterInt = int(ui.writeoffFilterPTE.toPlainText())
             # Add a tag text
             text = f'Order number: {ui.writeoffFilterPTE.toPlainText()}'
             ui.writeoffsTagsLabel.setText(text)
@@ -471,7 +481,7 @@ def output_write_offs_gui():
             ui.writeoffFilterPTE.setPlainText("")
             show_error("The order number must not contain any symbols except for digits!")
     else:
-        sqlquery = db.show_write_offs(db.write_offFilterInt)
+        sqlquery = db.show_write_offs(db.writeOffFilterInt)
         populate_table(ui.writeoffsTable, sqlquery, 5)
 
 
@@ -514,7 +524,7 @@ def clear_receipt_filter():
 
 
 def clear_write_off_filter():
-    db.write_offFilterInt = ""
+    db.writeOffFilterInt = ""
     ui.writeoffsTagsLabel.setText('Order number: ')
     output_write_offs_gui()
 
